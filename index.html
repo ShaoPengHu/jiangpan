@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>九宫格抽奖</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    .grid {
+      width: 300px;
+      height: 300px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 5px;
+      margin: 0 auto;
+    }
+
+    .cell {
+      background-color: #eee;
+      border: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      height: 90px;
+      width: 90px;
+      flex-direction: column;
+    }
+
+    .highlight {
+      border: 4px solid red;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1></h1>
+  <div class="grid" id="grid"></div>
+  <button onclick="startLottery()">开始抽奖</button>
+
+  <script>
+    const grid = document.getElementById('grid');
+
+    // 奖品定义（名称 + 权重）
+    const prizes = [
+      { name: '奖金888', weight: 0 },
+      { name: '一顿饭', weight: 3 },
+      { name: '奖金666', weight: 0 },
+      { name: '奖金555', weight: 1 },
+      { name: '', weight: 0 },  // 中间不参与
+      { name: '下午茶', weight: 3 },
+      { name: '奖金50', weight: 1 },
+      { name: '奖金100', weight: 1 },
+      { name: '陪睡', weight: 3 }
+    ];
+
+    // 创建格子
+    prizes.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'cell';
+      div.innerHTML = `${item.name}`;
+      grid.appendChild(div);
+    });
+
+    const cells = document.querySelectorAll('.cell');
+    const order = [0, 1, 2, 5, 8, 7, 6, 3]; // 顺时针顺序
+    let current = 0;
+    let timer = null;
+    let count = 0;
+    let total = 0;
+    let targetIndex = 0;
+
+    function highlight(index) {
+      cells.forEach(cell => cell.classList.remove('highlight'));
+      cells[order[index]].classList.add('highlight');
+    }
+
+    function weightedRandomIndex() {
+      const weighted = order.map(i => prizes[i].weight);
+      const sum = weighted.reduce((a, b) => a + b, 0);
+      let rand = Math.random() * sum;
+      for (let i = 0; i < weighted.length; i++) {
+        if (rand < weighted[i]) return i;
+        rand -= weighted[i];
+      }
+      return weighted.length - 1; // fallback
+    }
+
+    function startLottery() {
+      if (timer) return;
+
+      // 抽取目标格子（按权重）
+      targetIndex = weightedRandomIndex();
+
+      speed = 100;
+      count = 0;
+      const rounds = 3; // 最少完整转几圈
+      total = rounds * order.length + targetIndex;
+
+      timer = setInterval(() => {
+        highlight(current % order.length);
+        current++;
+        count++;
+
+        if (count > total) {
+          clearInterval(timer);
+          timer = null;
+          const prizeText = prizes[order[targetIndex]].name;
+
+          // 延迟50ms展示结果
+          setTimeout(() => {
+            alert('🎉 恭喜你抽到 ' + prizeText + '！');
+            location.reload();
+          }, 50);
+        }
+      }, speed);
+    }
+  </script>
+</body>
+</html>
